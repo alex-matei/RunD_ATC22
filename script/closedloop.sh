@@ -7,7 +7,7 @@ Usage:
 EOF
 }
 
-if [[ $# -ne 3 ]]; then
+if [[ $# -lt 3 ]]; then
     usage
     exit 1
 fi
@@ -15,12 +15,13 @@ fi
 client_num=$1
 req_num=$2
 runtime=$3
+ns=$4
 
 DIR=$(dirname $0)
 result_dir=${result_dir:-$(printf "%s_%03d_%s" ${runtime} ${client_num} $(date +%m%d%H%M))}
 ns=${ns:-"test"}
 prewarm_ns="$ns-prewarm"
-tmp_dir="/tmp/pod_test"
+tmp_dir="/tmp/pod_$ns"
 cpustat_out=$result_dir/cpu.txt
 
 start_cpu_load() {
@@ -69,7 +70,7 @@ client() {
     local output=$2
 
     local start_time=$($TIME_MILLI)
-    pid=$(crictl runp --runtime=$runtime $pod_config)
+    pid=$(crictl --timeout=10s runp --runtime=$runtime $pod_config)
     while true; do # wait for pod ready
         if crictl inspectp $pid | grep -q "SANDBOX_READY"; then
             break
